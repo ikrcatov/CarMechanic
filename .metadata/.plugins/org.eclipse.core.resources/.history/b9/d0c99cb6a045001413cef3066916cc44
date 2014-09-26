@@ -1,0 +1,65 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ public class Client
+/*    */ {
+/* 10 */   public String firstname = "";
+/* 11 */   public String lastname = "";
+/* 12 */   public String phone = "";
+/* 13 */   public Integer rowId = Integer.valueOf(0);
+/*    */   
+/*    */   public Client() {}
+/*    */   
+/*    */   public Client(int i, String firstname, String lastname, String phone)
+/*    */   {
+/* 16 */     this.firstname = firstname;
+/* 17 */     this.lastname = lastname;
+/* 18 */     this.phone = phone;
+/* 19 */     this.rowId = Integer.valueOf(i);
+/*    */   }
+/*    */   
+/*    */   public String getFirstname()
+/*    */   {
+/* 23 */     return this.firstname;
+/*    */   }
+/*    */   
+/*    */   public void setFirstname(String firstname)
+/*    */   {
+/* 27 */     this.firstname = firstname;
+/*    */   }
+/*    */   
+/*    */   public String getLastname()
+/*    */   {
+/* 31 */     return this.lastname;
+/*    */   }
+/*    */   
+/*    */   public void setLastname(String lastname)
+/*    */   {
+/* 35 */     this.lastname = lastname;
+/*    */   }
+/*    */   
+/*    */   public String getPhone()
+/*    */   {
+/* 39 */     return this.phone;
+/*    */   }
+/*    */   
+/*    */   public void setPhone(String phone)
+/*    */   {
+/* 43 */     this.phone = phone;
+/*    */   }
+/*    */   
+/*    */   public Integer getRowId()
+/*    */   {
+/* 47 */     return this.rowId;
+/*    */   }
+/*    */   
+/*    */   public void setRowId(Integer rowId)
+/*    */   {
+/* 51 */     this.rowId = rowId;
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.Client
+ * JD-Core Version:    0.7.0.1
+ */

@@ -1,0 +1,63 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ public class Task
+/*    */ {
+/*  4 */   public String taskName = "";
+/*  5 */   public String taskDescription = "";
+/*  6 */   public String taskStatus = "";
+/*  7 */   public Integer rowId = Integer.valueOf(0);
+/*    */   
+/*    */   public Task(int i, String taskName, String taskDescription, String taskStatus)
+/*    */   {
+/* 10 */     this.taskName = taskName;
+/* 11 */     this.taskDescription = taskDescription;
+/* 12 */     this.taskStatus = taskStatus;
+/* 13 */     this.rowId = Integer.valueOf(i);
+/*    */   }
+/*    */   
+/*    */   public String getTaskName()
+/*    */   {
+/* 17 */     return this.taskName;
+/*    */   }
+/*    */   
+/*    */   public void setTaskName(String taskName)
+/*    */   {
+/* 21 */     this.taskName = taskName;
+/*    */   }
+/*    */   
+/*    */   public String getTaskDescription()
+/*    */   {
+/* 25 */     return this.taskDescription;
+/*    */   }
+/*    */   
+/*    */   public void setTaskDescription(String taskDescription)
+/*    */   {
+/* 29 */     this.taskDescription = taskDescription;
+/*    */   }
+/*    */   
+/*    */   public String getTaskStatus()
+/*    */   {
+/* 33 */     return this.taskStatus;
+/*    */   }
+/*    */   
+/*    */   public void setTaskStatus(String taskStatus)
+/*    */   {
+/* 37 */     this.taskStatus = taskStatus;
+/*    */   }
+/*    */   
+/*    */   public Integer getRowId()
+/*    */   {
+/* 41 */     return this.rowId;
+/*    */   }
+/*    */   
+/*    */   public void setRowId(Integer rowId)
+/*    */   {
+/* 45 */     this.rowId = rowId;
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.Task
+ * JD-Core Version:    0.7.0.1
+ */

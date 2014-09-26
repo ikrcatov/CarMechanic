@@ -1,0 +1,57 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ import java.util.List;
+/*    */ 
+/*    */ public class Clients
+/*    */ {
+/*    */   private List<Client> clients;
+/*  8 */   private String username = "";
+/*  9 */   private String password = "";
+/* 10 */   private String rememberCbox = "";
+/*    */   
+/*    */   public String getRememberCbox()
+/*    */   {
+/* 13 */     return this.rememberCbox;
+/*    */   }
+/*    */   
+/*    */   public void setRememberCbox(String rememberCbox)
+/*    */   {
+/* 17 */     this.rememberCbox = rememberCbox;
+/*    */   }
+/*    */   
+/*    */   public List<Client> getClients()
+/*    */   {
+/* 21 */     return this.clients;
+/*    */   }
+/*    */   
+/*    */   public void setClients(List<Client> clients)
+/*    */   {
+/* 25 */     this.clients = clients;
+/*    */   }
+/*    */   
+/*    */   public String getUsername()
+/*    */   {
+/* 29 */     return this.username;
+/*    */   }
+/*    */   
+/*    */   public void setUsername(String username)
+/*    */   {
+/* 33 */     this.username = username;
+/*    */   }
+/*    */   
+/*    */   public String getPassword()
+/*    */   {
+/* 37 */     return this.password;
+/*    */   }
+/*    */   
+/*    */   public void setPassword(String password)
+/*    */   {
+/* 41 */     this.password = password;
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.Clients
+ * JD-Core Version:    0.7.0.1
+ */

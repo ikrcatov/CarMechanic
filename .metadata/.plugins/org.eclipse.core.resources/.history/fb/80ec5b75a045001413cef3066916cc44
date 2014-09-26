@@ -1,0 +1,1043 @@
+/*      */ package com.krcatovic.carMechanic;
+/*      */ 
+/*      */ import java.sql.Connection;
+/*      */ import java.sql.PreparedStatement;
+/*      */ import java.sql.ResultSet;
+/*      */ import java.sql.SQLException;
+/*      */ import java.text.DateFormat;
+/*      */ import java.util.ArrayList;
+/*      */ import java.util.Date;
+/*      */ import java.util.List;
+/*      */ import java.util.Locale;
+/*      */ import javax.sql.DataSource;
+/*      */ import org.slf4j.Logger;
+/*      */ import org.slf4j.LoggerFactory;
+/*      */ import org.springframework.stereotype.Controller;
+/*      */ import org.springframework.ui.Model;
+/*      */ import org.springframework.web.bind.annotation.ModelAttribute;
+/*      */ import org.springframework.web.bind.annotation.RequestMapping;
+/*      */ import org.springframework.web.bind.annotation.RequestParam;
+/*      */ import org.springframework.web.bind.annotation.ResponseBody;
+/*      */ import org.springframework.web.bind.annotation.SessionAttributes;
+/*      */ import org.springframework.web.servlet.ModelAndView;
+/*      */ 
+/*      */ @Controller
+/*      */ @SessionAttributes({"sessionUsername", "sessionPassword", "idApplicationUser"})
+/*      */ public class HomeController
+/*      */ {
+/*   35 */   private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
+/*      */   private DataSource dataSource;
+/*   37 */   private String ADMINISTRATOR_ROLE = "ADMINISTRATOR";
+/*   38 */   private String MECHANIC_ROLE = "MECHANIC";
+/*   39 */   private String CLIENT_ROLE = "CLIENT";
+/*      */   
+/*      */   public DataSource getDataSource()
+/*      */   {
+/*   43 */     return this.dataSource;
+/*      */   }
+/*      */   
+/*      */   public void setDataSource(DataSource dataSource)
+/*      */   {
+/*   48 */     this.dataSource = dataSource;
+/*      */   }
+/*      */   
+/*      */   @ModelAttribute("sessionUsername")
+/*      */   public String populateUserName()
+/*      */   {
+/*   54 */     return "";
+/*      */   }
+/*      */   
+/*      */   @ModelAttribute("sessionPassword")
+/*      */   public String populatePassword()
+/*      */   {
+/*   60 */     return "";
+/*      */   }
+/*      */   
+/*      */   @ModelAttribute("idApplicationUser")
+/*      */   public Integer populateIdApplicationUser()
+/*      */   {
+/*   66 */     return Integer.valueOf(0);
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/"}, method={org.springframework.web.bind.annotation.RequestMethod.GET})
+/*      */   public String home(Locale locale, Model model)
+/*      */   {
+/*   72 */     Date date = new Date();
+/*   73 */     DateFormat dateFormat = DateFormat.getDateTimeInstance(1, 1, locale);
+/*   74 */     String formattedDate = dateFormat.format(date);
+/*      */     
+/*   76 */     logger.info("Index Page Opened", formattedDate);
+/*      */     
+/*   78 */     return "home";
+/*      */   }
+/*      */   
+/*      */   @RequestMapping({"/loginScreen"})
+/*      */   public ModelAndView get(@RequestParam(required=false, value="usernameID") String usernameID, @RequestParam(required=false, value="passwordId") String passwordId, @RequestParam(required=false, value="rememberId") String rememberId, Model model, @ModelAttribute("sessionUsername") String sessionUsername, @ModelAttribute("sessionPassword") String sessionPassword)
+/*      */   {
+/*   87 */     Clients clientForm = new Clients();
+/*   88 */     List<Client> clients = new ArrayList();
+/*      */     
+/*   90 */     Tasks tasks = new Tasks();
+/*   91 */     List<Task> taskList = new ArrayList();
+/*      */     
+/*   93 */     String username = "";
+/*   94 */     String password = "";
+/*   95 */     String cBox = rememberId;
+/*   97 */     if ((!Helper.isStringNullEmpty(usernameID).booleanValue()) && (!Helper.isStringNullEmpty(passwordId).booleanValue()))
+/*      */     {
+/*   99 */       username = usernameID;
+/*  100 */       password = passwordId;
+/*      */     }
+/*  103 */     else if ((!Helper.isStringNullEmpty(sessionUsername).booleanValue()) && (!Helper.isStringNullEmpty(sessionPassword).booleanValue()))
+/*      */     {
+/*  105 */       username = sessionUsername;
+/*  106 */       password = sessionPassword;
+/*      */     }
+/*  110 */     if ((!Helper.isStringNullEmpty(username).booleanValue()) && (!Helper.isStringNullEmpty(password).booleanValue()))
+/*      */     {
+/*  113 */       model.addAttribute("sessionUsername", username);
+/*  114 */       model.addAttribute("sessionPassword", password);
+/*      */       
+/*  116 */       Integer idApplicationUserFetched = fetchIdApplicationUserByUsernameAndPassword(username.trim(), password.trim());
+/*  118 */       if (idApplicationUserFetched != null) {
+/*  119 */         model.addAttribute("idApplicationUser", idApplicationUserFetched);
+/*      */       }
+/*  121 */       String applicationUserRole = fetchApplicationUserRoleByUsernameAndPassword(username.trim(), password.trim());
+/*  123 */       if ((!Helper.isStringNullEmpty(applicationUserRole).booleanValue()) && ((applicationUserRole.equals(this.ADMINISTRATOR_ROLE)) || (applicationUserRole.equals(this.MECHANIC_ROLE))))
+/*      */       {
+/*  125 */         clients = fetchAllClientsFromDatabase(username.trim(), password.trim());
+/*  127 */         if ((clients != null) && (clients.size() > 0))
+/*      */         {
+/*  129 */           clientForm.setClients(clients);
+/*  131 */           if (!Helper.isStringNullEmpty(cBox).booleanValue())
+/*      */           {
+/*  133 */             clientForm.setPassword(password);
+/*  134 */             clientForm.setUsername(username);
+/*  135 */             clientForm.setRememberCbox(cBox);
+/*      */           }
+/*  138 */           logger.info("Client List Opened");
+/*  139 */           return new ModelAndView("loginScreen", "clientForm", clientForm);
+/*      */         }
+/*  144 */         clientForm.setClients(clients);
+/*      */         
+/*  146 */         logger.info("Client List Opened");
+/*  147 */         return new ModelAndView("loginScreen", "clientForm", clientForm);
+/*      */       }
+/*  151 */       if ((!Helper.isStringNullEmpty(applicationUserRole).booleanValue()) && (applicationUserRole.equals(this.CLIENT_ROLE)))
+/*      */       {
+/*  153 */         taskList = fetchAllTasksFromDatabase(username.trim(), password.trim());
+/*  155 */         if ((taskList != null) && (taskList.size() > 0))
+/*      */         {
+/*  157 */           tasks.setTasks(taskList);
+/*  159 */           if (!Helper.isStringNullEmpty(cBox).booleanValue())
+/*      */           {
+/*  161 */             tasks.setPassword(password);
+/*  162 */             tasks.setUsername(username);
+/*  163 */             tasks.setRememberCbox(cBox);
+/*      */           }
+/*  166 */           logger.info("Task List Opened");
+/*  167 */           return new ModelAndView("clientTasks", "clientTaskModel", tasks);
+/*      */         }
+/*  172 */         tasks.setTasks(taskList);
+/*  173 */         logger.info("Task List Opened");
+/*  174 */         return new ModelAndView("clientTasks", "clientTaskModel", tasks);
+/*      */       }
+/*  180 */       model.addAttribute("loginError", "Incorrect login credentials! Please try again!");
+/*      */     }
+/*  184 */     logger.info("Returned to Index");
+/*  185 */     return new ModelAndView("home", "homeModelAttribute", clientForm);
+/*      */   }
+/*      */   
+/*      */   private Integer fetchIdApplicationUserByUsernameAndPassword(String userName, String password)
+/*      */   {
+/*  190 */     String getRoleNameByUsernamePasswordQuery = "SELECT ID FROM APPLICATION_USER AU WHERE AU.USERNAME = '" + userName + "' " + 
+/*  191 */       "AND AU.PASSWORD = '" + password + "' AND AU.DELETED = 0 ORDER BY ID";
+/*      */     
+/*  193 */     Integer idAppUser = Integer.valueOf(0);
+/*      */     
+/*  195 */     Connection conn = null;
+/*      */     try
+/*      */     {
+/*  199 */       conn = this.dataSource.getConnection();
+/*  200 */       PreparedStatement ps = conn.prepareStatement(getRoleNameByUsernamePasswordQuery);
+/*      */       
+/*  202 */       ResultSet rs = ps.executeQuery();
+/*  204 */       if (rs != null) {
+/*  206 */         while (rs.next()) {
+/*  208 */           idAppUser = Integer.valueOf(rs.getInt("ID"));
+/*      */         }
+/*      */       }
+/*  212 */       rs.close();
+/*  213 */       ps.close();
+/*      */     }
+/*      */     catch (SQLException e)
+/*      */     {
+/*  218 */       throw new RuntimeException(e);
+/*      */     }
+/*      */     finally
+/*      */     {
+/*  223 */       if (conn != null) {
+/*      */         try
+/*      */         {
+/*  227 */           conn.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/*  232 */           throw new RuntimeException(e);
+/*      */         }
+/*      */       }
+/*      */     }
+/*  237 */     if (idAppUser != null) {
+/*  238 */       return idAppUser;
+/*      */     }
+/*  240 */     return Integer.valueOf(0);
+/*      */   }
+/*      */   
+/*      */   private String fetchApplicationUserRoleByUsernameAndPassword(String username, String password)
+/*      */   {
+/*  245 */     String getRoleNameByUsernamePasswordQuery = "SELECT NAME FROM APPLICATION_USER_ROLE AUR INNER JOIN APPLICATION_USER AU ON AU.ID_APPLICATION_USER_ROLE = AUR.ID WHERE AU.USERNAME = '" + 
+/*  246 */       username + "' AND AU.PASSWORD = '" + password + "' " + 
+/*  247 */       "AND AUR.ID = AU.ID_APPLICATION_USER_ROLE  AND AUR.DELETED = 0 AND AU.DELETED = 0 ORDER BY NAME";
+/*      */     
+/*  249 */     String rola = "";
+/*      */     
+/*  251 */     Connection conn = null;
+/*      */     try
+/*      */     {
+/*  255 */       conn = this.dataSource.getConnection();
+/*  256 */       PreparedStatement ps = conn.prepareStatement(getRoleNameByUsernamePasswordQuery);
+/*      */       
+/*  258 */       ResultSet rs = ps.executeQuery();
+/*  260 */       if (rs != null) {
+/*  262 */         while (rs.next()) {
+/*  264 */           rola = rs.getString("NAME");
+/*      */         }
+/*      */       }
+/*  268 */       rs.close();
+/*  269 */       ps.close();
+/*      */     }
+/*      */     catch (SQLException e)
+/*      */     {
+/*  274 */       throw new RuntimeException(e);
+/*      */     }
+/*      */     finally
+/*      */     {
+/*  279 */       if (conn != null) {
+/*      */         try
+/*      */         {
+/*  283 */           conn.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/*  288 */           throw new RuntimeException(e);
+/*      */         }
+/*      */       }
+/*      */     }
+/*  293 */     if (!Helper.isStringNullEmpty(rola).booleanValue()) {
+/*  294 */       return rola;
+/*      */     }
+/*  296 */     return "";
+/*      */   }
+/*      */   
+/*      */   private List<Client> fetchAllClientsFromDatabase(String username, String password)
+/*      */   {
+/*  301 */     String getAllClientsForByUsernamePasswordQuerys = "SELECT C.ID, C.FIRST_NAME, C.LAST_NAME, C.PHONE FROM CLIENT C LEFT JOIN APPLICATION_USER AU ON C.ID_APPLICATION_USER = AU.ID WHERE AU.USERNAME = '" + 
+/*      */     
+/*  303 */       username + "' AND AU.PASSWORD = '" + password + "' AND C.DELETED = 0 " + 
+/*  304 */       "AND AU.DELETED = 0 ORDER BY C.ID, C.FIRST_NAME, C.LAST_NAME";
+/*      */     
+/*  306 */     List<Client> clients = new ArrayList();
+/*      */     
+/*  308 */     Connection conn = null;
+/*      */     try
+/*      */     {
+/*  312 */       conn = this.dataSource.getConnection();
+/*  313 */       PreparedStatement ps = conn.prepareStatement(getAllClientsForByUsernamePasswordQuerys);
+/*      */       
+/*  315 */       ResultSet rs = ps.executeQuery();
+/*  317 */       if (rs != null) {
+/*  319 */         while (rs.next()) {
+/*  321 */           clients.add(new Client(rs.getInt("ID"), rs.getString("FIRST_NAME"), rs.getString("LAST_NAME"), 
+/*  322 */             rs.getString("PHONE")));
+/*      */         }
+/*      */       }
+/*  326 */       rs.close();
+/*  327 */       ps.close();
+/*      */     }
+/*      */     catch (SQLException e)
+/*      */     {
+/*  332 */       throw new RuntimeException(e);
+/*      */     }
+/*      */     finally
+/*      */     {
+/*  337 */       if (conn != null) {
+/*      */         try
+/*      */         {
+/*  341 */           conn.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/*  346 */           throw new RuntimeException(e);
+/*      */         }
+/*      */       }
+/*      */     }
+/*  351 */     if ((clients != null) && (!clients.isEmpty())) {
+/*  352 */       return clients;
+/*      */     }
+/*  354 */     return new ArrayList();
+/*      */   }
+/*      */   
+/*      */   private List<Task> fetchAllTasksFromDatabase(String username, String password)
+/*      */   {
+/*  363 */     String getAllTasksForByUsernamePasswordQuerys = "SELECT T.ID, T.NAME, T.REMARK, T.STATUS FROM TASK T WHERE ID_CLIENT = (SELECT AU.ID_CLIENT FROM APPLICATION_USER AU WHERE AU.USERNAME = '" + 
+/*  364 */       username + "' AND AU.PASSWORD = '" + password + "' " + 
+/*  365 */       "AND AU.DELETED = 0) AND T.DELETED = 0 ORDER BY T.ID, T.NAME, T.REMARK";
+/*      */     
+/*  367 */     List<Task> taskList = new ArrayList();
+/*      */     
+/*  369 */     Connection conn = null;
+/*      */     try
+/*      */     {
+/*  373 */       conn = this.dataSource.getConnection();
+/*  374 */       PreparedStatement ps = conn.prepareStatement(getAllTasksForByUsernamePasswordQuerys);
+/*      */       
+/*  376 */       ResultSet rs = ps.executeQuery();
+/*  378 */       if (rs != null) {
+/*  380 */         while (rs.next()) {
+/*  382 */           taskList.add(new Task(rs.getInt("ID"), rs.getString("NAME"), rs.getString("REMARK"), rs.getString("STATUS")));
+/*      */         }
+/*      */       }
+/*  386 */       rs.close();
+/*  387 */       ps.close();
+/*      */     }
+/*      */     catch (SQLException e)
+/*      */     {
+/*  392 */       throw new RuntimeException(e);
+/*      */     }
+/*      */     finally
+/*      */     {
+/*  397 */       if (conn != null) {
+/*      */         try
+/*      */         {
+/*  401 */           conn.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/*  406 */           throw new RuntimeException(e);
+/*      */         }
+/*      */       }
+/*      */     }
+/*  411 */     if ((taskList != null) && (!taskList.isEmpty())) {
+/*  412 */       return taskList;
+/*      */     }
+/*  414 */     return new ArrayList();
+/*      */   }
+/*      */   
+/*      */   @RequestMapping({"/logout"})
+/*      */   public String logout(Model model, @RequestParam String usernameHidden, @RequestParam String passwordHidden, @RequestParam(required=false, value="rememberHidden") String rememberHidden)
+/*      */   {
+/*  422 */     String username = usernameHidden;
+/*  423 */     String password = passwordHidden;
+/*  424 */     String cBox = rememberHidden;
+/*  426 */     if (!Helper.isStringNullEmpty(cBox).booleanValue())
+/*      */     {
+/*  428 */       model.addAttribute("usernameValue", username);
+/*  429 */       model.addAttribute("passwordValue", password);
+/*  430 */       model.addAttribute("cBoxValue", cBox);
+/*  431 */       model.addAttribute("logOutFlag", "true");
+/*      */     }
+/*  434 */     logger.info("LogOut Executed");
+/*  435 */     return "home";
+/*      */   }
+/*      */   
+/*      */   @RequestMapping({"/openCLientTaskForMechanicAndAdministrator"})
+/*      */   public ModelAndView openCLientTaskForMechanicAndAdministrator(@RequestParam String rowIdClientHidden)
+/*      */   {
+/*  441 */     List<Task> taskList = new ArrayList();
+/*  442 */     Tasks tasks = new Tasks();
+/*  443 */     Connection conn = null;
+/*  445 */     if (!Helper.isStringNullEmpty(rowIdClientHidden).booleanValue())
+/*      */     {
+/*  447 */       String getAllTasksByRowId = "SELECT T.ID, T.NAME, T.REMARK, T.STATUS FROM TASK T WHERE T.ID_CLIENT IN (SELECT ID FROM CLIENT C WHERE C.ID = " + 
+/*  448 */         rowIdClientHidden + " AND C.DELETED = 0 ) AND T.DELETED = 0 " + 
+/*  449 */         "ORDER BY T.ID, T.NAME, T.REMARK, T.STATUS";
+/*      */       try
+/*      */       {
+/*  453 */         conn = this.dataSource.getConnection();
+/*  454 */         PreparedStatement ps = conn.prepareStatement(getAllTasksByRowId);
+/*      */         
+/*  456 */         ResultSet rs = ps.executeQuery();
+/*  458 */         if (rs != null) {
+/*  460 */           while (rs.next()) {
+/*  462 */             taskList.add(new Task(rs.getInt("ID"), rs.getString("NAME"), rs.getString("REMARK"), rs.getString("STATUS")));
+/*      */           }
+/*      */         }
+/*  466 */         rs.close();
+/*  467 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  472 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  477 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  481 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  486 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  491 */       if ((taskList != null) && (!taskList.isEmpty()))
+/*      */       {
+/*  493 */         tasks.setTasks(taskList);
+/*  494 */         tasks.setRowIdClient(Integer.valueOf(rowIdClientHidden));
+/*      */         
+/*  496 */         logger.info("Task List For Mechanic By Client Opened");
+/*  497 */         return new ModelAndView("clientTasksForMechanic", "clientTaskForMechanicModel", tasks);
+/*      */       }
+/*  502 */       tasks.setTasks(taskList);
+/*  503 */       tasks.setRowIdClient(Integer.valueOf(rowIdClientHidden));
+/*      */       
+/*  505 */       logger.info("Task List For Mechanic By Client Opened");
+/*  506 */       return new ModelAndView("clientTasksForMechanic", "clientTaskForMechanicModel", tasks);
+/*      */     }
+/*  513 */     tasks.setTasks(taskList);
+/*      */     
+/*  515 */     logger.info("Task List For Mechanic By Client Opened");
+/*  516 */     return new ModelAndView("clientTasksForMechanic", "clientTaskForMechanicModel", tasks);
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/deleteItemByRowId"}, consumes={"application/json"}, headers={"content-type=application/x-www-form-urlencoded"})
+/*      */   public String deleteItemByRowId(@RequestParam String RowId)
+/*      */   {
+/*  523 */     if (!Helper.isStringNullEmpty(RowId).booleanValue())
+/*      */     {
+/*  525 */       String deleteRowByIdQuery = "UPDATE TASK SET DELETED = 1 WHERE ID = " + RowId;
+/*      */       
+/*  527 */       Connection conn = null;
+/*      */       try
+/*      */       {
+/*  531 */         conn = this.dataSource.getConnection();
+/*  532 */         PreparedStatement ps = conn.prepareStatement(deleteRowByIdQuery);
+/*  533 */         ps.executeUpdate();
+/*  534 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  539 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  544 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  548 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  553 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  558 */       return "clientTasksForMechanic";
+/*      */     }
+/*  562 */     return "clientTasksForMechanic";
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/saveItemByRowId"}, consumes={"application/json"}, headers={"content-type=application/x-www-form-urlencoded"})
+/*      */   public String saveItemByRowId(@RequestParam(required=false, value="parsedDataByDelimiters") String parsedDataByDelimiters, @RequestParam(required=false, value="rowIdClientHidden") String rowIdClientHidden, @ModelAttribute("idApplicationUser") Integer idApplicationUser)
+/*      */   {
+/*  570 */     if (!Helper.isStringNullEmpty(parsedDataByDelimiters).booleanValue())
+/*      */     {
+/*  572 */       Connection conn = null;
+/*      */       
+/*  574 */       String rowId = "";
+/*  575 */       String taskName = "";
+/*  576 */       String taskDescription = "";
+/*  577 */       String taskStatus = "";
+/*      */       
+/*  579 */       String mainDelimiter = ";";
+/*  580 */       String secondaryDelimiter = ":";
+/*      */       
+/*  582 */       String[] mainRows = parsedDataByDelimiters.split(mainDelimiter);
+/*  583 */       String[] itemsBetweenRow = null;
+/*      */       
+/*  585 */       String saveRowByIdQuery = "";
+/*  587 */       if ((mainRows != null) && (mainRows.length > 0)) {
+/*  589 */         for (int i = 0; i < mainRows.length; i++)
+/*      */         {
+/*  591 */           itemsBetweenRow = mainRows[i].split(secondaryDelimiter);
+/*  593 */           if ((itemsBetweenRow != null) && (itemsBetweenRow.length > 0))
+/*      */           {
+/*  595 */             for (int j = 0; j < itemsBetweenRow.length; j++) {
+/*  597 */               if (j == 0) {
+/*  598 */                 rowId = itemsBetweenRow[j];
+/*  600 */               } else if (j == 1) {
+/*  601 */                 taskName = itemsBetweenRow[j];
+/*  603 */               } else if (j == 2) {
+/*  604 */                 taskDescription = itemsBetweenRow[j];
+/*  606 */               } else if (j == 3) {
+/*  607 */                 taskStatus = itemsBetweenRow[j];
+/*      */               }
+/*      */             }
+/*  611 */             if (Helper.isStringNullEmpty(rowId).booleanValue()) {
+/*  612 */               saveRowByIdQuery = 
+/*  613 */                 "INSERT INTO TASK (ID_CLIENT, ID_APPLICATION_USER, NAME, REMARK, STATUS, DELETED) VALUES(" + rowIdClientHidden + ", " + idApplicationUser + ", '" + taskName + "', '" + taskDescription + "', '" + taskStatus + "', 0)";
+/*      */             } else {
+/*  616 */               saveRowByIdQuery = 
+/*  617 */                 "UPDATE TASK T SET T.NAME = '" + taskName + "', T.REMARK = '" + taskDescription + "', " + "T.STATUS = '" + taskStatus + "' WHERE ID = " + rowId;
+/*      */             }
+/*      */             try
+/*      */             {
+/*  621 */               conn = this.dataSource.getConnection();
+/*  622 */               PreparedStatement ps = conn.prepareStatement(saveRowByIdQuery);
+/*  623 */               ps.executeUpdate();
+/*  624 */               ps.close();
+/*      */             }
+/*      */             catch (SQLException e)
+/*      */             {
+/*  629 */               throw new RuntimeException(e);
+/*      */             }
+/*      */             finally
+/*      */             {
+/*  634 */               if (conn != null) {
+/*      */                 try
+/*      */                 {
+/*  638 */                   conn.close();
+/*      */                 }
+/*      */                 catch (SQLException e)
+/*      */                 {
+/*  643 */                   throw new RuntimeException(e);
+/*      */                 }
+/*      */               }
+/*      */             }
+/*      */           }
+/*      */         }
+/*      */       }
+/*  651 */       return "clientTasksForMechanic";
+/*      */     }
+/*  655 */     return "clientTasksForMechanic";
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/deleteClientByRowId"}, consumes={"application/json"}, headers={"content-type=application/x-www-form-urlencoded"})
+/*      */   public String deleteClientByRowId(@RequestParam String RowId)
+/*      */   {
+/*  661 */     if (!Helper.isStringNullEmpty(RowId).booleanValue())
+/*      */     {
+/*  663 */       String deleteRowByIdQuery = "UPDATE CLIENT SET DELETED = 1 WHERE ID = " + RowId;
+/*      */       
+/*  665 */       Connection conn = null;
+/*      */       try
+/*      */       {
+/*  669 */         conn = this.dataSource.getConnection();
+/*  670 */         PreparedStatement ps = conn.prepareStatement(deleteRowByIdQuery);
+/*  671 */         ps.executeUpdate();
+/*  672 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  677 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  682 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  686 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  691 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  697 */       String deleteCredentialsRowByIdQuery = "UPDATE USER_CREDENTIALS SET DELETED = 1 WHERE ID_CLIENT = " + RowId;
+/*      */       try
+/*      */       {
+/*  701 */         conn = this.dataSource.getConnection();
+/*  702 */         PreparedStatement ps = conn.prepareStatement(deleteCredentialsRowByIdQuery);
+/*  703 */         ps.executeUpdate();
+/*  704 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  709 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  714 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  718 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  723 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  729 */       String deleteTasksRowByIdQuery = "UPDATE TASK SET DELETED = 1 WHERE ID_CLIENT = " + RowId;
+/*      */       try
+/*      */       {
+/*  733 */         conn = this.dataSource.getConnection();
+/*  734 */         PreparedStatement ps = conn.prepareStatement(deleteTasksRowByIdQuery);
+/*  735 */         ps.executeUpdate();
+/*  736 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  741 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  746 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  750 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  755 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  761 */       String deleteApplicationUserRowByIdQuery = "UPDATE APPLICATION_USER SET DELETED = 1 WHERE ID_CLIENT = " + RowId;
+/*      */       try
+/*      */       {
+/*  765 */         conn = this.dataSource.getConnection();
+/*  766 */         PreparedStatement ps = conn.prepareStatement(deleteApplicationUserRowByIdQuery);
+/*  767 */         ps.executeUpdate();
+/*  768 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  773 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  778 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  782 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  787 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  792 */       return "loginScreen";
+/*      */     }
+/*  796 */     return "loginScreen";
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/saveClientsByRowId"}, consumes={"application/json"}, headers={"content-type=application/x-www-form-urlencoded"})
+/*      */   public String saveClientsByRowId(@RequestParam(required=false, value="parsedDataByDelimiters") String parsedDataByDelimiters, @ModelAttribute("idApplicationUser") Integer idApplicationUser)
+/*      */   {
+/*  803 */     if (!Helper.isStringNullEmpty(parsedDataByDelimiters).booleanValue())
+/*      */     {
+/*  805 */       Connection conn = null;
+/*      */       
+/*  807 */       String mainDelimiter = ";";
+/*  808 */       String secondaryDelimiter = ":";
+/*      */       
+/*  810 */       String[] mainRows = parsedDataByDelimiters.split(mainDelimiter);
+/*  811 */       String[] itemsBetweenRow = null;
+/*      */       
+/*  813 */       String saveRowByIdQuery = "";
+/*  815 */       if ((mainRows != null) && (mainRows.length > 0)) {
+/*  817 */         for (int i = 0; i < mainRows.length; i++)
+/*      */         {
+/*  819 */           itemsBetweenRow = mainRows[i].split(secondaryDelimiter);
+/*      */           
+/*  821 */           String rowId = "";
+/*  822 */           String firstName = "";
+/*  823 */           String lastName = "";
+/*  824 */           String phone = "";
+/*  826 */           if ((itemsBetweenRow != null) && (itemsBetweenRow.length > 0))
+/*      */           {
+/*  828 */             for (int j = 0; j < itemsBetweenRow.length; j++) {
+/*  830 */               if (j == 0) {
+/*  831 */                 rowId = itemsBetweenRow[j];
+/*  833 */               } else if (j == 1) {
+/*  834 */                 firstName = itemsBetweenRow[j];
+/*  836 */               } else if (j == 2) {
+/*  837 */                 lastName = itemsBetweenRow[j];
+/*  839 */               } else if (j == 3) {
+/*  840 */                 phone = itemsBetweenRow[j];
+/*      */               }
+/*      */             }
+/*  844 */             if (Helper.isStringNullEmpty(rowId).booleanValue())
+/*      */             {
+/*  846 */               saveRowByIdQuery = 
+/*  847 */                 "INSERT INTO CLIENT (ID_APPLICATION_USER, FIRST_NAME, LAST_NAME, PHONE,DELETED) VALUES(" + idApplicationUser + ", '" + firstName + "', '" + lastName + "', '" + phone + "', 0)";
+/*      */               try
+/*      */               {
+/*  850 */                 conn = this.dataSource.getConnection();
+/*  851 */                 PreparedStatement ps = conn.prepareStatement(saveRowByIdQuery);
+/*  852 */                 ps.executeUpdate();
+/*  853 */                 ps.close();
+/*      */               }
+/*      */               catch (SQLException e)
+/*      */               {
+/*  858 */                 throw new RuntimeException(e);
+/*      */               }
+/*      */               finally
+/*      */               {
+/*  863 */                 if (conn != null) {
+/*      */                   try
+/*      */                   {
+/*  867 */                     conn.close();
+/*      */                   }
+/*      */                   catch (SQLException e)
+/*      */                   {
+/*  872 */                     throw new RuntimeException(e);
+/*      */                   }
+/*      */                 }
+/*      */               }
+/*      */             }
+/*  878 */             if (!Helper.isStringNullEmpty(firstName).booleanValue()) {
+/*  878 */               if (((Helper.isStringNullEmpty(lastName).booleanValue() ? 0 : 1) & (Helper.isStringNullEmpty(phone).booleanValue() ? 0 : 1)) != 0)
+/*      */               {
+/*  880 */                 saveRowByIdQuery = 
+/*  881 */                   "UPDATE CLIENT C SET C.FIRST_NAME = '" + firstName + "', " + "C.LAST_NAME = '" + lastName + "', C.PHONE = '" + phone + "' WHERE ID = " + rowId;
+/*      */                 try
+/*      */                 {
+/*  885 */                   conn = this.dataSource.getConnection();
+/*  886 */                   PreparedStatement ps = conn.prepareStatement(saveRowByIdQuery);
+/*  887 */                   ps.executeUpdate();
+/*  888 */                   ps.close();
+/*      */                 }
+/*      */                 catch (SQLException e)
+/*      */                 {
+/*  893 */                   throw new RuntimeException(e);
+/*      */                 }
+/*      */                 finally
+/*      */                 {
+/*  898 */                   if (conn != null) {
+/*      */                     try
+/*      */                     {
+/*  902 */                       conn.close();
+/*      */                     }
+/*      */                     catch (SQLException e)
+/*      */                     {
+/*  907 */                       throw new RuntimeException(e);
+/*      */                     }
+/*      */                   }
+/*      */                 }
+/*      */               }
+/*      */             }
+/*      */           }
+/*      */         }
+/*      */       }
+/*  916 */       return "loginScreen";
+/*      */     }
+/*  920 */     return "loginScreen";
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/getClientCredentialsByRowId"}, consumes={"application/json"}, headers={"content-type=application/x-www-form-urlencoded"})
+/*      */   @ResponseBody
+/*      */   public ClientCredentials getClientCredentialsByRowId(@RequestParam(required=false, value="RowId") String RowId, @ModelAttribute("idApplicationUser") Integer idApplicationUser)
+/*      */   {
+/*  927 */     ClientCredentials credentials = new ClientCredentials();
+/*  928 */     List<ClientCredential> clientData = new ArrayList();
+/*  929 */     Connection conn = null;
+/*  931 */     if (!Helper.isStringNullEmpty(RowId).booleanValue())
+/*      */     {
+/*  933 */       String selectRowByIdQuery = "SELECT AU.FIRST_NAME, AU.LAST_NAME, AU.USERNAME, AU.PASSWORD FROM APPLICATION_USER AU LEFT JOIN CLIENT C LEFT JOIN USER_CREDENTIALS UC ON C.ID = UC.ID_CLIENT ON AU.ID = UC.ID_APPLICATION_USER WHERE AU.ID = UC.ID_APPLICATION_USER AND C.ID = UC.ID_CLIENT AND C.ID = " + 
+/*      */       
+/*      */ 
+/*  936 */         RowId + " AND AU.DELETED = 0 AND C.DELETED = 0 AND UC.DELETED = 0 ";
+/*      */       try
+/*      */       {
+/*  940 */         conn = this.dataSource.getConnection();
+/*  941 */         PreparedStatement ps = conn.prepareStatement(selectRowByIdQuery);
+/*      */         
+/*  943 */         ResultSet rs = ps.executeQuery();
+/*  945 */         if (rs != null) {
+/*  947 */           while (rs.next()) {
+/*  949 */             clientData.add(new ClientCredential(rs.getString("FIRST_NAME"), rs.getString("LAST_NAME"), rs.getString("USERNAME"), rs.getString("PASSWORD")));
+/*      */           }
+/*      */         }
+/*  953 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/*  958 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/*  963 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/*  967 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/*  972 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/*  977 */       if ((clientData != null) && (!clientData.isEmpty()))
+/*      */       {
+/*  979 */         credentials.setClientCredentials(clientData);
+/*      */         
+/*  981 */         return credentials;
+/*      */       }
+/*  986 */       credentials.setClientCredentials(clientData);
+/*      */       
+/*  988 */       return credentials;
+/*      */     }
+/*  994 */     credentials.setClientCredentials(clientData);
+/*      */     
+/*  996 */     return credentials;
+/*      */   }
+/*      */   
+/*      */   @RequestMapping(value={"/saveUserCredentials"}, consumes={"application/json"}, headers={"content-type=application/x-www-form-urlencoded"})
+/*      */   public String saveUserCredentials(@RequestParam(required=false, value="RowId") String RowId, @RequestParam(required=false, value="usernameInputHidden") String usernameInput, @RequestParam(required=false, value="passwordInputHidden") String passwordInput, @ModelAttribute("idApplicationUser") Integer idApplicationUser)
+/*      */   {
+/* 1005 */     if ((!Helper.isStringNullEmpty(RowId).booleanValue()) && (!Helper.isStringNullEmpty(usernameInput).booleanValue()) && (!Helper.isStringNullEmpty(passwordInput).booleanValue()))
+/*      */     {
+/* 1007 */       String firstName = "";
+/* 1008 */       String lastName = "";
+/* 1009 */       String idApplicationUserClient = "";
+/*      */       
+/* 1011 */       String selectRowByIdQuery = "SELECT C.FIRST_NAME, C.LAST_NAME FROM CLIENT C WHERE C.DELETED = 0 AND C.ID = " + RowId;
+/* 1012 */       Connection conn = null;
+/*      */       try
+/*      */       {
+/* 1016 */         conn = this.dataSource.getConnection();
+/* 1017 */         PreparedStatement ps = conn.prepareStatement(selectRowByIdQuery);
+/*      */         
+/* 1019 */         ResultSet rs = ps.executeQuery();
+/* 1021 */         if (rs != null) {
+/* 1023 */           while (rs.next())
+/*      */           {
+/* 1025 */             firstName = rs.getString("FIRST_NAME");
+/* 1026 */             lastName = rs.getString("LAST_NAME");
+/*      */           }
+/*      */         }
+/* 1030 */         ps.close();
+/*      */       }
+/*      */       catch (SQLException e)
+/*      */       {
+/* 1035 */         throw new RuntimeException(e);
+/*      */       }
+/*      */       finally
+/*      */       {
+/* 1040 */         if (conn != null) {
+/*      */           try
+/*      */           {
+/* 1044 */             conn.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/* 1049 */             throw new RuntimeException(e);
+/*      */           }
+/*      */         }
+/*      */       }
+/* 1054 */       if ((!Helper.isStringNullEmpty(firstName).booleanValue()) && (!Helper.isStringNullEmpty(lastName).booleanValue()))
+/*      */       {
+/* 1056 */         List<ClientCredential> clientData = new ArrayList();
+/*      */         
+/* 1058 */         String selectItemFromAppUserQuery = "SELECT AU.FIRST_NAME, AU.LAST_NAME, AU.USERNAME, AU.PASSWORD FROM APPLICATION_USER AU LEFT JOIN CLIENT C LEFT JOIN USER_CREDENTIALS UC ON C.ID = UC.ID_CLIENT ON AU.ID = UC.ID_APPLICATION_USER WHERE AU.ID = UC.ID_APPLICATION_USER AND C.ID = UC.ID_CLIENT AND C.ID = " + 
+/*      */         
+/*      */ 
+/* 1061 */           RowId + " AND AU.DELETED = 0 AND C.DELETED = 0 AND UC.DELETED = 0 ";
+/*      */         try
+/*      */         {
+/* 1065 */           conn = this.dataSource.getConnection();
+/* 1066 */           PreparedStatement ps = conn.prepareStatement(selectItemFromAppUserQuery);
+/*      */           
+/* 1068 */           ResultSet rs = ps.executeQuery();
+/* 1070 */           if (rs != null) {
+/* 1072 */             while (rs.next()) {
+/* 1074 */               clientData.add(new ClientCredential(rs.getString("FIRST_NAME"), rs.getString("LAST_NAME"), rs.getString("USERNAME"), rs.getString("PASSWORD")));
+/*      */             }
+/*      */           }
+/* 1078 */           ps.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/* 1083 */           throw new RuntimeException(e);
+/*      */         }
+/*      */         finally
+/*      */         {
+/* 1088 */           if (conn != null) {
+/*      */             try
+/*      */             {
+/* 1092 */               conn.close();
+/*      */             }
+/*      */             catch (SQLException e)
+/*      */             {
+/* 1097 */               throw new RuntimeException(e);
+/*      */             }
+/*      */           }
+/*      */         }
+/* 1102 */         if ((clientData != null) && (!clientData.isEmpty()))
+/*      */         {
+/* 1104 */           String selectQueryId = "SELECT AU.ID FROM APPLICATION_USER AU WHERE AU.DELETED = 0 AND AU.FIRST_NAME = '" + 
+/* 1105 */             ((ClientCredential)clientData.get(0)).getFirstname() + "' AND AU.LAST_NAME = '" + ((ClientCredential)clientData.get(0)).getLastname() + "'";
+/*      */           try
+/*      */           {
+/* 1109 */             conn = this.dataSource.getConnection();
+/* 1110 */             PreparedStatement ps = conn.prepareStatement(selectQueryId);
+/* 1111 */             ResultSet rs = ps.executeQuery();
+/* 1113 */             if (rs != null) {
+/* 1115 */               while (rs.next()) {
+/* 1117 */                 idApplicationUserClient = rs.getString("ID");
+/*      */               }
+/*      */             }
+/* 1121 */             ps.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/* 1126 */             throw new RuntimeException(e);
+/*      */           }
+/*      */           finally
+/*      */           {
+/* 1131 */             if (conn != null) {
+/*      */               try
+/*      */               {
+/* 1135 */                 conn.close();
+/*      */               }
+/*      */               catch (SQLException e)
+/*      */               {
+/* 1140 */                 throw new RuntimeException(e);
+/*      */               }
+/*      */             }
+/*      */           }
+/* 1145 */           if (Helper.isStringNullEmpty(idApplicationUserClient).booleanValue()) {
+/*      */             break label1362;
+/*      */           }
+/* 1147 */           String updateQuery = "UPDATE APPLICATION_USER AU SET AU.USERNAME = '" + usernameInput + "', " + 
+/* 1148 */             "AU.PASSWORD = '" + passwordInput + "', AU.ID_CLIENT = '" + RowId + "' WHERE ID = " + idApplicationUserClient;
+/*      */           try
+/*      */           {
+/* 1152 */             conn = this.dataSource.getConnection();
+/* 1153 */             PreparedStatement ps = conn.prepareStatement(updateQuery);
+/* 1154 */             ps.executeUpdate();
+/* 1155 */             ps.close();
+/*      */           }
+/*      */           catch (SQLException e)
+/*      */           {
+/* 1160 */             throw new RuntimeException(e);
+/*      */           }
+/*      */           finally
+/*      */           {
+/* 1165 */             if (conn != null) {
+/*      */               try
+/*      */               {
+/* 1169 */                 conn.close();
+/*      */               }
+/*      */               catch (SQLException e)
+/*      */               {
+/* 1174 */                 throw new RuntimeException(e);
+/*      */               }
+/*      */             }
+/*      */           }
+/*      */         }
+/* 1183 */         Connection conn1 = null;
+/*      */         
+/* 1185 */         String insertQuery = "INSERT INTO APPLICATION_USER (ID_APPLICATION_USER_ROLE, FIRST_NAME, LAST_NAME, USERNAME, PASSWORD, DELETED, ID_CLIENT)VALUES (3, '" + 
+/* 1186 */           firstName + "', '" + lastName + "', '" + usernameInput + "', '" + passwordInput + "', 0, " + RowId + ")";
+/*      */         
+/* 1188 */         String selectQueryId = "SELECT AU.ID FROM APPLICATION_USER AU WHERE AU.DELETED = 0 AND AU.FIRST_NAME = '" + 
+/* 1189 */           firstName + "' AND AU.LAST_NAME = '" + lastName + "'";
+/*      */         try
+/*      */         {
+/* 1193 */           conn1 = this.dataSource.getConnection();
+/* 1194 */           PreparedStatement ps = conn1.prepareStatement(insertQuery);
+/* 1195 */           ps.executeUpdate();
+/* 1196 */           ps.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/* 1201 */           throw new RuntimeException(e);
+/*      */         }
+/*      */         finally
+/*      */         {
+/* 1206 */           if (conn1 != null) {
+/*      */             try
+/*      */             {
+/* 1210 */               conn1.close();
+/*      */             }
+/*      */             catch (SQLException e)
+/*      */             {
+/* 1215 */               throw new RuntimeException(e);
+/*      */             }
+/*      */           }
+/*      */         }
+/*      */         try
+/*      */         {
+/* 1222 */           conn = this.dataSource.getConnection();
+/* 1223 */           PreparedStatement ps = conn.prepareStatement(selectQueryId);
+/* 1224 */           ResultSet rs = ps.executeQuery();
+/* 1226 */           if (rs != null) {
+/* 1228 */             while (rs.next()) {
+/* 1230 */               idApplicationUserClient = rs.getString("ID");
+/*      */             }
+/*      */           }
+/* 1234 */           ps.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/* 1239 */           throw new RuntimeException(e);
+/*      */         }
+/*      */         finally
+/*      */         {
+/* 1244 */           if (conn != null) {
+/*      */             try
+/*      */             {
+/* 1248 */               conn.close();
+/*      */             }
+/*      */             catch (SQLException e)
+/*      */             {
+/* 1253 */               throw new RuntimeException(e);
+/*      */             }
+/*      */           }
+/*      */         }
+/*      */         try
+/*      */         {
+/* 1260 */           String insertQuery2 = "INSERT INTO USER_CREDENTIALS (ID_APPLICATION_USER, ID_CLIENT, DELETED)VALUES (" + 
+/* 1261 */             idApplicationUserClient + ", " + RowId + ", 0)";
+/*      */           
+/* 1263 */           conn = this.dataSource.getConnection();
+/* 1264 */           PreparedStatement ps = conn.prepareStatement(insertQuery2);
+/* 1265 */           ps.executeUpdate();
+/* 1266 */           ps.close();
+/*      */         }
+/*      */         catch (SQLException e)
+/*      */         {
+/* 1271 */           throw new RuntimeException(e);
+/*      */         }
+/*      */         finally
+/*      */         {
+/* 1276 */           if (conn != null) {
+/*      */             try
+/*      */             {
+/* 1280 */               conn.close();
+/*      */             }
+/*      */             catch (SQLException e)
+/*      */             {
+/* 1285 */               throw new RuntimeException(e);
+/*      */             }
+/*      */           }
+/*      */         }
+/*      */       }
+/*      */     }
+/*      */     label1362:
+/* 1293 */     return "loginScreen";
+/*      */   }
+/*      */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.HomeController
+ * JD-Core Version:    0.7.0.1
+ */

@@ -1,0 +1,26 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ public class Helper
+/*    */ {
+/*    */   public static Boolean isStringNullEmpty(String variable)
+/*    */   {
+/*  7 */     if (variable != null)
+/*    */     {
+/*  9 */       if (!variable.equals(""))
+/*    */       {
+/* 11 */         if (!variable.equals("undefined")) {
+/* 13 */           return Boolean.valueOf(false);
+/*    */         }
+/* 16 */         return Boolean.valueOf(true);
+/*    */       }
+/* 19 */       return Boolean.valueOf(true);
+/*    */     }
+/* 22 */     return Boolean.valueOf(true);
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.Helper
+ * JD-Core Version:    0.7.0.1
+ */

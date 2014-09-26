@@ -1,0 +1,76 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ public class ClientCredential
+/*    */ {
+/* 10 */   public String firstname = "";
+/* 11 */   public String lastname = "";
+/* 12 */   public String username = "";
+/* 13 */   public String password = "";
+/* 14 */   public Integer rowId = Integer.valueOf(0);
+/*    */   
+/*    */   public ClientCredential() {}
+/*    */   
+/*    */   public ClientCredential(String firstname, String lastname, String username, String password)
+/*    */   {
+/* 17 */     this.firstname = firstname;
+/* 18 */     this.lastname = lastname;
+/* 19 */     this.username = username;
+/* 20 */     this.password = password;
+/*    */   }
+/*    */   
+/*    */   public String getUsername()
+/*    */   {
+/* 24 */     return this.username;
+/*    */   }
+/*    */   
+/*    */   public void setUsername(String username)
+/*    */   {
+/* 28 */     this.username = username;
+/*    */   }
+/*    */   
+/*    */   public String getPassword()
+/*    */   {
+/* 32 */     return this.password;
+/*    */   }
+/*    */   
+/*    */   public void setPassword(String password)
+/*    */   {
+/* 36 */     this.password = password;
+/*    */   }
+/*    */   
+/*    */   public String getFirstname()
+/*    */   {
+/* 40 */     return this.firstname;
+/*    */   }
+/*    */   
+/*    */   public void setFirstname(String firstname)
+/*    */   {
+/* 44 */     this.firstname = firstname;
+/*    */   }
+/*    */   
+/*    */   public String getLastname()
+/*    */   {
+/* 48 */     return this.lastname;
+/*    */   }
+/*    */   
+/*    */   public void setLastname(String lastname)
+/*    */   {
+/* 52 */     this.lastname = lastname;
+/*    */   }
+/*    */   
+/*    */   public Integer getRowId()
+/*    */   {
+/* 56 */     return this.rowId;
+/*    */   }
+/*    */   
+/*    */   public void setRowId(Integer rowId)
+/*    */   {
+/* 60 */     this.rowId = rowId;
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.ClientCredential
+ * JD-Core Version:    0.7.0.1
+ */

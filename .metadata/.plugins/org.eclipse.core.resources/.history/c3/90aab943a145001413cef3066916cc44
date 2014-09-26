@@ -1,0 +1,68 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ import java.util.List;
+/*    */ 
+/*    */ public class Tasks
+/*    */ {
+/*    */   private List<Task> tasks;
+/*  8 */   private String username = "";
+/*  9 */   private String password = "";
+/* 10 */   private String rememberCbox = "";
+/* 11 */   private Integer rowIdClient = Integer.valueOf(0);
+/*    */   
+/*    */   public Integer getRowIdClient()
+/*    */   {
+/* 14 */     return this.rowIdClient;
+/*    */   }
+/*    */   
+/*    */   public void setRowIdClient(Integer rowIdClient)
+/*    */   {
+/* 18 */     this.rowIdClient = rowIdClient;
+/*    */   }
+/*    */   
+/*    */   public String getRememberCbox()
+/*    */   {
+/* 22 */     return this.rememberCbox;
+/*    */   }
+/*    */   
+/*    */   public void setRememberCbox(String rememberCbox)
+/*    */   {
+/* 26 */     this.rememberCbox = rememberCbox;
+/*    */   }
+/*    */   
+/*    */   public String getUsername()
+/*    */   {
+/* 30 */     return this.username;
+/*    */   }
+/*    */   
+/*    */   public void setUsername(String username)
+/*    */   {
+/* 34 */     this.username = username;
+/*    */   }
+/*    */   
+/*    */   public String getPassword()
+/*    */   {
+/* 38 */     return this.password;
+/*    */   }
+/*    */   
+/*    */   public void setPassword(String password)
+/*    */   {
+/* 42 */     this.password = password;
+/*    */   }
+/*    */   
+/*    */   public List<Task> getTasks()
+/*    */   {
+/* 46 */     return this.tasks;
+/*    */   }
+/*    */   
+/*    */   public void setTasks(List<Task> tasks)
+/*    */   {
+/* 50 */     this.tasks = tasks;
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.Tasks
+ * JD-Core Version:    0.7.0.1
+ */

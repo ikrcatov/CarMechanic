@@ -1,0 +1,24 @@
+/*    */ package com.krcatovic.carMechanic;
+/*    */ 
+/*    */ import java.util.List;
+/*    */ 
+/*    */ public class ClientCredentials
+/*    */ {
+/*    */   private List<ClientCredential> clientCredentials;
+/*    */   
+/*    */   public List<ClientCredential> getClientCredentials()
+/*    */   {
+/* 10 */     return this.clientCredentials;
+/*    */   }
+/*    */   
+/*    */   public void setClientCredentials(List<ClientCredential> clientCredentials)
+/*    */   {
+/* 14 */     this.clientCredentials = clientCredentials;
+/*    */   }
+/*    */ }
+
+
+/* Location:           C:\Users\Ivan\Desktop\
+ * Qualified Name:     com.krcatovic.carMechanic.ClientCredentials
+ * JD-Core Version:    0.7.0.1
+ */
