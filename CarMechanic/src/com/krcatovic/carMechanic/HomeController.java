@@ -305,7 +305,7 @@ public class HomeController {
 				while (rs.next()) {
 					taskList.add(new Task(rs.getInt("ID"),
 							rs.getString("NAME"), rs.getString("REMARK"), rs
-									.getString("STATUS")));
+							.getString("STATUS")));
 				}
 			}
 			rs.close();
@@ -664,8 +664,8 @@ public class HomeController {
 						if (!Helper.isStringNullEmpty(firstName).booleanValue()) {
 							if (((Helper.isStringNullEmpty(lastName)
 									.booleanValue() ? 0 : 1) & (Helper
-									.isStringNullEmpty(phone).booleanValue() ? 0
-									: 1)) != 0) {
+											.isStringNullEmpty(phone).booleanValue() ? 0
+													: 1)) != 0) {
 								saveRowByIdQuery = "UPDATE CLIENT C SET C.FIRST_NAME = '"
 										+ firstName
 										+ "', "
@@ -835,10 +835,10 @@ public class HomeController {
 				if ((clientData != null) && (!clientData.isEmpty())) {
 					String selectQueryId = "SELECT AU.ID FROM APPLICATION_USER AU WHERE AU.DELETED = 0 AND AU.FIRST_NAME = '"
 							+ ((ClientCredential) clientData.get(0))
-									.getFirstname()
+							.getFirstname()
 							+ "' AND AU.LAST_NAME = '"
 							+ ((ClientCredential) clientData.get(0))
-									.getLastname() + "'";
+							.getLastname() + "'";
 					try {
 						conn = this.dataSource.getConnection();
 						PreparedStatement ps = conn
@@ -860,10 +860,6 @@ public class HomeController {
 								throw new RuntimeException(e);
 							}
 						}
-					}
-					if (Helper.isStringNullEmpty(idApplicationUserClient)
-							.booleanValue()) {
-						break label1362;
 					}
 					String updateQuery = "UPDATE APPLICATION_USER AU SET AU.USERNAME = '"
 							+ usernameInput
